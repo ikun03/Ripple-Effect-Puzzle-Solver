@@ -8,10 +8,10 @@ class PuzzleCell:
         self.id = str(row) + "," + str(column)
 
     def __str__(self):
-        return str(self.row) + "," + str(self.column)
+        return str(self.value)
 
     def __repr__(self):
-        return "(" + str(self.row) + "," + str(self.column) + ")"
+        return str(self.value)
 
 
 def inAddedCells(addedCellsDict, rowCounter, columnCounter):
@@ -114,6 +114,10 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
                     nodeList = getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex, nodeList)
                     for node in nodeList:
                         node.region = regionCounter
+                        if node.value == ".":
+                            node.value = 0
+                        else:
+                            node.value = int(node.value)
                         addedCellsDict[str(node.row) + "," + str(node.column)] = node
                         matrixOfCells[node.row][node.column] = node
                 if len(nodeList) != 0:
@@ -136,22 +140,42 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
 
     for index in range(1, value + 1):
         i = row + index
-        if (not (i > (len(puzzleMatrix) - 1))) and (puzzleMatrix[i][column] == value):
+        if (not (i > (len(puzzleMatrix) - 1))) and (puzzleMatrix[i][column].value == value):
             return False
 
         i = row - index
-        if i > -1 and puzzleMatrix[i][column] == value:
+        if i > -1 and puzzleMatrix[i][column].value == value:
             return False
 
         i = column + index
-        if (not (i > (len(puzzleMatrix[row]) - 1))) and (puzzleMatrix[row][i] == value):
+        if (not (i > (len(puzzleMatrix[row]) - 1))) and (puzzleMatrix[row][i].value == value):
             return False
 
         i = column - index
-        if i > -1 and puzzleMatrix[row][i] == value:
+        if i > -1 and puzzleMatrix[row][i].value == value:
             return False
 
     return True
+
+
+def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
+    for num in range(1, maxValue + 1):
+        if isPlacementLegal(num, row, column, puzzleMatrix, regionList):
+            puzzleMatrix[row][column].value = num
+            if row == (len(puzzleMatrix) - 1) and column == (len(puzzleMatrix[0]) - 1):
+                return True
+            if column == (len(puzzleMatrix[0]) - 1):
+                newRow = row + 1
+                newColumn = 0
+                value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
+            else:
+                newColumn = column + 1
+                value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
+
+            if value:
+                return True
+    puzzleMatrix[row][column].value = 0
+    return False
 
 
 def main():
@@ -168,14 +192,17 @@ def main():
         size += 1
 
     puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
-    print(puzzleMatrix)
-    print(regionList)
+    # print(puzzleMatrix)
+    # print(regionList)
 
     # We have the puzzle, now check if a particular number placement is legal
     value = 1
     row = 0
     column = 0
-    isPlacementLegal(value, row, column, puzzleMatrix, regionList)
+    maxValue = 16
+    # isPlacementLegal(value, row, column, puzzleMatrix, regionList)
+    solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
+    print(puzzleMatrix)
 
 
 main()
