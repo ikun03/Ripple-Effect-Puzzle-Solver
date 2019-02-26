@@ -125,6 +125,35 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
     return matrixOfCells, listOfRegions
 
 
+def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
+    cell = puzzleMatrix[row][column]
+    if value > len(regionList[cell.region]):
+        return False
+
+    for node in regionList[cell.region]:
+        if node.value == value:
+            return False
+
+    for index in range(1, value + 1):
+        i = row + index
+        if (not (i > (len(puzzleMatrix) - 1))) and (puzzleMatrix[i][column] == value):
+            return False
+
+        i = row - index
+        if i > -1 and puzzleMatrix[i][column] == value:
+            return False
+
+        i = column + index
+        if (not (i > (len(puzzleMatrix[row]) - 1))) and (puzzleMatrix[row][i] == value):
+            return False
+
+        i = column - index
+        if i > -1 and puzzleMatrix[row][i] == value:
+            return False
+
+    return True
+
+
 def main():
     fileName = "puzzle1.txt"
     file = open(fileName, "r")
@@ -141,6 +170,12 @@ def main():
     puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
     print(puzzleMatrix)
     print(regionList)
+
+    # We have the puzzle, now check if a particular number placement is legal
+    value = 1
+    row = 0
+    column = 0
+    isPlacementLegal(value, row, column, puzzleMatrix, regionList)
 
 
 main()
