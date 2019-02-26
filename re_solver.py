@@ -1,5 +1,5 @@
 class PuzzleCell:
-    __slots__ = "row", "column", "value", "id"
+    __slots__ = "row", "column", "value", "id", "region"
 
     def __init__(self, value, row, column):
         self.value = value
@@ -113,15 +113,16 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
                     nodeList = [puzzleCell]
                     nodeList = getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex, nodeList)
                     for node in nodeList:
+                        node.region = regionCounter
                         addedCellsDict[str(node.row) + "," + str(node.column)] = node
                         matrixOfCells[node.row][node.column] = node
-
-                listOfRegions.append(nodeList)
-                regionCounter += 1
+                if len(nodeList) != 0:
+                    listOfRegions.append(nodeList)
+                    regionCounter += 1
                 columnCounter += 1
         if "." in lineArray[lineIndex]:
             rowCounter += 1
-    print(listOfRegions)
+    return matrixOfCells, listOfRegions
 
 
 def main():
@@ -137,7 +138,9 @@ def main():
         lineArray.append(line.strip("\n"))
         size += 1
 
-    processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
+    puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
+    print(puzzleMatrix)
+    print(regionList)
 
 
 main()
