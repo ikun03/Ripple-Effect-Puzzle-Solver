@@ -10,9 +10,12 @@ class PuzzleCell:
     def __str__(self):
         return str(self.row) + "," + str(self.column)
 
+    def __repr__(self):
+        return "(" + str(self.row) + "," + str(self.column) + ")"
+
 
 def inAddedCells(addedCellsDict, rowCounter, columnCounter):
-    if rowCounter + columnCounter in addedCellsDict.keys():
+    if str(rowCounter) + "," + str(columnCounter) in addedCellsDict.keys():
         return True
     else:
         return False
@@ -37,7 +40,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
 
     # For checking the top cell
     lineIndexCounter = lineIndex - 1
-    while len(lineArray[lineIndexCounter]) < (charIndex +1) or lineArray[lineIndexCounter][charIndex] == " ":
+    while len(lineArray[lineIndexCounter]) < (charIndex + 1) or lineArray[lineIndexCounter][charIndex] == " ":
         lineIndexCounter -= 1
     if lineArray[lineIndexCounter][charIndex] != "-":
         if lineArray[lineIndexCounter][charIndex] == ".":
@@ -80,7 +83,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
                     break
             if not isPresent:
                 nodeList.append(PuzzleCell(lineArray[lineIndex][charIndexCounter], rowCounter, columnCounter - 1))
-                nodeList = getAllRegionCells(rowCounter, columnCounter + 1, lineArray, lineIndex, charIndexCounter,
+                nodeList = getAllRegionCells(rowCounter, columnCounter - 1, lineArray, lineIndex, charIndexCounter,
                                              nodeList)
 
     return nodeList
@@ -110,8 +113,9 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
                     nodeList = [puzzleCell]
                     nodeList = getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex, nodeList)
                     for node in nodeList:
-                        addedCellsDict[node.row + node.column] = node
+                        addedCellsDict[str(node.row) + "," + str(node.column)] = node
                         matrixOfCells[node.row][node.column] = node
+
                 listOfRegions.append(nodeList)
                 regionCounter += 1
                 columnCounter += 1
