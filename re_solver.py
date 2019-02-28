@@ -1,11 +1,12 @@
 class PuzzleCell:
-    __slots__ = "row", "column", "value", "id", "region"
+    __slots__ = "row", "column", "value", "id", "region", "isFixedValue"
 
     def __init__(self, value, row, column):
         self.value = value
         self.row = row
         self.column = column
         self.id = str(row) + "," + str(column)
+        self.isFixedValue = False
 
     def __str__(self):
         return str(self.value)
@@ -118,6 +119,7 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
                             node.value = 0
                         else:
                             node.value = int(node.value)
+                            node.isFixedValue = True
                         addedCellsDict[str(node.row) + "," + str(node.column)] = node
                         matrixOfCells[node.row][node.column] = node
                 if len(nodeList) != 0:
@@ -159,22 +161,38 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
 
 
 def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
-    for num in range(1, maxValue + 1):
-        if isPlacementLegal(num, row, column, puzzleMatrix, regionList):
-            puzzleMatrix[row][column].value = num
-            if row == (len(puzzleMatrix) - 1) and column == (len(puzzleMatrix[0]) - 1):
-                return True
-            if column == (len(puzzleMatrix[0]) - 1):
-                newRow = row + 1
-                newColumn = 0
-                value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
-            else:
-                newColumn = column + 1
-                value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
+    node = puzzleMatrix[row][column]
+    if node.isFixedValue:
+        if row == (len(puzzleMatrix) - 1) and column == (len(puzzleMatrix[0]) - 1):
+            return True
+        if column == (len(puzzleMatrix[0]) - 1):
+            newRow = row + 1
+            newColumn = 0
+            value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
+        else:
+            newColumn = column + 1
+            value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
 
-            if value:
-                return True
-    puzzleMatrix[row][column].value = 0
+        if value:
+            return True
+    elif not node.isFixedValue:
+        for num in range(1, len(regionList[node.region]) + 1):
+            if isPlacementLegal(num, row, column, puzzleMatrix, regionList):
+                puzzleMatrix[row][column].value = num
+                if row == (len(puzzleMatrix) - 1) and column == (len(puzzleMatrix[0]) - 1):
+                    return True
+                if column == (len(puzzleMatrix[0]) - 1):
+                    newRow = row + 1
+                    newColumn = 0
+                    value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
+                else:
+                    newColumn = column + 1
+                    value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
+
+                if value:
+                    return True
+    if not node.isFixedValue:
+        puzzleMatrix[row][column].value = 0
     return False
 
 
@@ -199,10 +217,12 @@ def main():
     value = 1
     row = 0
     column = 0
-    maxValue = 16
+    maxValue = 324
+
     # isPlacementLegal(value, row, column, puzzleMatrix, regionList)
     solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
-    print(puzzleMatrix)
+    for line in puzzleMatrix:
+        print(line)
 
 
 main()
