@@ -28,7 +28,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
     while len(lineArray[lineIndexCounter]) < (charIndex + 1) or lineArray[lineIndexCounter][charIndex] == " ":
         lineIndexCounter += 1
     if lineArray[lineIndexCounter][charIndex] != "-":
-        if lineArray[lineIndexCounter][charIndex] == ".":
+        if lineArray[lineIndexCounter][charIndex] == "." or int(lineArray[lineIndexCounter][charIndex]) > 0:
             isPresent = False
             for node in nodeList:
                 if node.id == (str(rowCounter + 1) + "," + str(columnCounter)):
@@ -44,7 +44,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
     while len(lineArray[lineIndexCounter]) < (charIndex + 1) or lineArray[lineIndexCounter][charIndex] == " ":
         lineIndexCounter -= 1
     if lineArray[lineIndexCounter][charIndex] != "-":
-        if lineArray[lineIndexCounter][charIndex] == ".":
+        if lineArray[lineIndexCounter][charIndex] == "." or int(lineArray[lineIndexCounter][charIndex]) > 0:
             isPresent = False
             for node in nodeList:
                 if node.id == (str(rowCounter - 1) + "," + str(columnCounter)):
@@ -60,7 +60,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
     while lineArray[lineIndex][charIndexCounter] == " ":
         charIndexCounter += 1
     if lineArray[lineIndex][charIndexCounter] != "|":
-        if lineArray[lineIndex][charIndexCounter] == ".":
+        if lineArray[lineIndex][charIndexCounter] == "." or int(lineArray[lineIndex][charIndexCounter]) > 0:
             isPresent = False
             for node in nodeList:
                 if node.id == (str(rowCounter) + "," + str(columnCounter + 1)):
@@ -76,7 +76,7 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
     while lineArray[lineIndex][charIndexCounter] == " ":
         charIndexCounter -= 1
     if lineArray[lineIndex][charIndexCounter] != "|":
-        if lineArray[lineIndex][charIndexCounter] == ".":
+        if lineArray[lineIndex][charIndexCounter] == "." or int(lineArray[lineIndex][charIndexCounter]) > 0:
             isPresent = False
             for node in nodeList:
                 if node.id == (str(rowCounter) + "," + str(columnCounter - 1)):
@@ -163,8 +163,12 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
 def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
     node = puzzleMatrix[row][column]
     if node.isFixedValue:
+        value = False
         if row == (len(puzzleMatrix) - 1) and column == (len(puzzleMatrix[0]) - 1):
-            return True
+            if isPlacementLegal(node.value, row, column, puzzleMatrix, regionList):
+                return True
+            else:
+                return False
         if column == (len(puzzleMatrix[0]) - 1):
             newRow = row + 1
             newColumn = 0
@@ -196,6 +200,63 @@ def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
     return False
 
 
+def solveNextCell2(index, puzzleList, puzzleMatrix, regionList):
+    node = puzzleList[index]
+    node = puzzleMatrix[node.row][node.column]
+    if node.isFixedValue:
+        value = False
+        if index == len(puzzleList) - 1:
+            if isPlacementLegal(node.value, node.row, node.column, puzzleMatrix, regionList):
+                return True
+            else:
+                return False
+        else:
+            value = solveNextCell2(index + 1, puzzleList, puzzleMatrix, regionList)
+
+        if value:
+            return True
+    elif not node.isFixedValue:
+        for num in range(1, len(regionList[node.region]) + 1):
+            if isPlacementLegal(num, node.row, node.column, puzzleMatrix, regionList):
+                value = False
+                puzzleMatrix[node.row][node.column].value = num
+                if index == len(puzzleList) - 1:
+                    value = True
+                else:
+                    value = solveNextCell2(index + 1, puzzleList, puzzleMatrix, regionList)
+
+                if value:
+                    return True
+
+    if not node.isFixedValue:
+        puzzleMatrix[node.row][node.column].value = 0
+    return False
+
+
+def sortRegionList(regionList, puzzleMatrix):
+    for i in range(0, len(regionList) - 1):
+        minimumIndex = i
+        for j in range(i + 1, len(regionList)):
+            if len(regionList[j]) < len(regionList[minimumIndex]):
+                minimumIndex = j
+        temp = regionList[minimumIndex]
+        regionList[minimumIndex] = regionList[i]
+        regionList[i] = temp
+    for i in range(0, len(regionList)):
+        for node in regionList[i]:
+            node.region = i
+            puzzleMatrix[node.row][node.column].region = i
+
+
+def getPuzzleList(regionList):
+    list = []
+    for region in regionList:
+        for cell in region:
+            list.append(cell)
+
+    return list
+
+
 def main():
     fileName = "puzzle1.txt"
     file = open(fileName, "r")
@@ -220,7 +281,11 @@ def main():
     maxValue = 324
 
     # isPlacementLegal(value, row, column, puzzleMatrix, regionList)
-    solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
+    #solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
+
+    sortRegionList(regionList, puzzleMatrix)
+    puzzleList = getPuzzleList(regionList)
+    solveNextCell2(0, puzzleList, puzzleMatrix, regionList)
     for line in puzzleMatrix:
         print(line)
 
