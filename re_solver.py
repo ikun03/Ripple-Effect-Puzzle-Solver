@@ -1,5 +1,8 @@
+import copy
+
+
 class PuzzleCell:
-    __slots__ = "row", "column", "value", "id", "region", "isFixedValue"
+    __slots__ = "row", "column", "value", "id", "region", "isFixedValue", "isValueAssigned", "minRemVals"
 
     def __init__(self, value, row, column):
         self.value = value
@@ -7,6 +10,8 @@ class PuzzleCell:
         self.column = column
         self.id = str(row) + "," + str(column)
         self.isFixedValue = False
+        self.isValueAssigned = False
+        self.minRemVals = []
 
     def __str__(self):
         return str(self.value)
@@ -203,6 +208,7 @@ def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
 def solveNextCell2(index, puzzleList, puzzleMatrix, regionList):
     node = puzzleList[index]
     node = puzzleMatrix[node.row][node.column]
+    print(index);
     if node.isFixedValue:
         value = False
         if index == len(puzzleList) - 1:
@@ -257,6 +263,105 @@ def getPuzzleList(regionList):
     return list
 
 
+def assignCellsMRV(regionList, puzzleMatrix):
+    for region in regionList:
+        for puzzleCell in region:
+            cell = puzzleCell
+            for i in range(1, len(regionList[cell.region]) + 1):
+                cell.minRemVals.append(i)
+                # puzzleMatrix[cell.row][cell.column].minRemVals.append(i)
+
+
+def forwardCheck(cell, regionList, puzzleMatrix):
+    value = cell.value
+    for othCells in regionList[cell.region]:
+        if value in othCells.minRemVals and othCells.id != cell.id:
+            othCells.minRemVals.remove(value)
+
+    # clear columns
+    for i in range(1, value + 1):
+        index = cell.column - i
+        if index >= 0:
+            if value in puzzleMatrix[cell.row][index].minRemVals:
+                puzzleMatrix[cell.row][index].minRemVals.remove(value)
+
+        index = cell.column + i
+        if index < len(puzzleMatrix[0]):
+            if value in puzzleMatrix[cell.row][index].minRemVals:
+                puzzleMatrix[cell.row][index].minRemVals.remove(value)
+
+        index = cell.row - i
+        if index >= 0:
+            if value in puzzleMatrix[index][cell.column].minRemVals:
+                puzzleMatrix[index][cell.column].minRemVals.remove(value)
+
+        index = cell.row + i
+        if index < len(puzzleMatrix):
+            if value in puzzleMatrix[index][cell.column].minRemVals:
+                puzzleMatrix[index][cell.column].minRemVals.remove(value)
+
+
+def fixedValueMRVAdjust(regionList, puzzleMatrix):
+    for region in regionList:
+        for cell in region:
+            if cell.isFixedValue:
+                cell.isValueAssigned = True
+                forwardCheck(cell, regionList, puzzleMatrix)
+
+
+def solveOneValMRV(regionList, puzzleMatrix):
+    for region in regionList:
+        if len(region) == 1:
+            region[0].value = 1
+            region[0].isValueAssigned = True
+            forwardCheck(region[0], regionList, puzzleMatrix)
+
+
+def findMinMRV(puzzleMatrix):
+    minCell = PuzzleCell(0, -1, -1)
+    for row in puzzleMatrix:
+        for cell in row:
+            if (not cell.isFixedValue) and (not cell.isValueAssigned):
+                if minCell.row == -1:
+                    minCell = cell
+                elif len(minCell.minRemVals) > len(cell.minRemVals):
+                    minCell = cell
+    return minCell
+
+
+def intelligentSolver(regionList, puzzleMatrix):
+    cell = findMinMRV(puzzleMatrix)
+    print(str(cell.id))
+    if cell.row == -1:
+        for line in puzzleMatrix:
+            print(line)
+        return True
+    else:
+        if len(cell.minRemVals) == 0:
+            return False
+        else:
+            for cellValue in cell.minRemVals:
+
+                newCell = copy.deepcopy(cell)
+                newCell.value = cellValue
+                newCell.isValueAssigned = True
+                newRegionList = copy.deepcopy(regionList)
+                newPuzzleMatrix = copy.deepcopy(puzzleMatrix)
+                cellRegion = newRegionList[newCell.region]
+
+                for val in range(0, len(cellRegion)):
+                    if cellRegion[val].row == cell.row and cellRegion[val].column == cell.column:
+                        newRegionList[newCell.region][val] = newPuzzleMatrix[newCell.row][newCell.column] = newCell
+                        break
+                forwardCheck(newCell, newRegionList, newPuzzleMatrix)
+
+                result = intelligentSolver(newRegionList, newPuzzleMatrix)
+                if result:
+                    return True
+
+            return False
+
+
 def main():
     fileName = "puzzle1.txt"
     file = open(fileName, "r")
@@ -281,13 +386,21 @@ def main():
     maxValue = 324
 
     # isPlacementLegal(value, row, column, puzzleMatrix, regionList)
-    #solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
+    # solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
+    # for line in puzzleMatrix:
+    #     print(line)
 
-    sortRegionList(regionList, puzzleMatrix)
-    puzzleList = getPuzzleList(regionList)
-    solveNextCell2(0, puzzleList, puzzleMatrix, regionList)
+    # Intelligent solver with MRV and Forward checking
+    # First fill in MRV for all cells
+    assignCellsMRV(regionList, puzzleMatrix)
+
+    # Handle regions with fixed value
+    fixedValueMRVAdjust(regionList, puzzleMatrix)
+    solveOneValMRV(regionList, puzzleMatrix)
     for line in puzzleMatrix:
         print(line)
+    intelligentSolver(regionList, puzzleMatrix)
+    # print("Done")
 
 
 main()
