@@ -1,4 +1,5 @@
 import copy
+import time
 
 
 class PuzzleCell:
@@ -165,7 +166,7 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
     return True
 
 
-def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
+def solveNextCell(row, column, puzzleMatrix, regionList):
     node = puzzleMatrix[row][column]
     if node.isFixedValue:
         value = False
@@ -177,10 +178,10 @@ def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
         if column == (len(puzzleMatrix[0]) - 1):
             newRow = row + 1
             newColumn = 0
-            value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
+            value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList)
         else:
             newColumn = column + 1
-            value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
+            value = solveNextCell(row, newColumn, puzzleMatrix, regionList)
 
         if value:
             return True
@@ -193,65 +194,16 @@ def solveNextCell(row, column, puzzleMatrix, regionList, maxValue):
                 if column == (len(puzzleMatrix[0]) - 1):
                     newRow = row + 1
                     newColumn = 0
-                    value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList, maxValue)
+                    value = solveNextCell(newRow, newColumn, puzzleMatrix, regionList)
                 else:
                     newColumn = column + 1
-                    value = solveNextCell(row, newColumn, puzzleMatrix, regionList, maxValue)
+                    value = solveNextCell(row, newColumn, puzzleMatrix, regionList)
 
                 if value:
                     return True
     if not node.isFixedValue:
         puzzleMatrix[row][column].value = 0
     return False
-
-
-def solveNextCell2(index, puzzleList, puzzleMatrix, regionList):
-    node = puzzleList[index]
-    node = puzzleMatrix[node.row][node.column]
-    print(index);
-    if node.isFixedValue:
-        value = False
-        if index == len(puzzleList) - 1:
-            if isPlacementLegal(node.value, node.row, node.column, puzzleMatrix, regionList):
-                return True
-            else:
-                return False
-        else:
-            value = solveNextCell2(index + 1, puzzleList, puzzleMatrix, regionList)
-
-        if value:
-            return True
-    elif not node.isFixedValue:
-        for num in range(1, len(regionList[node.region]) + 1):
-            if isPlacementLegal(num, node.row, node.column, puzzleMatrix, regionList):
-                value = False
-                puzzleMatrix[node.row][node.column].value = num
-                if index == len(puzzleList) - 1:
-                    value = True
-                else:
-                    value = solveNextCell2(index + 1, puzzleList, puzzleMatrix, regionList)
-
-                if value:
-                    return True
-
-    if not node.isFixedValue:
-        puzzleMatrix[node.row][node.column].value = 0
-    return False
-
-
-def sortRegionList(regionList, puzzleMatrix):
-    for i in range(0, len(regionList) - 1):
-        minimumIndex = i
-        for j in range(i + 1, len(regionList)):
-            if len(regionList[j]) < len(regionList[minimumIndex]):
-                minimumIndex = j
-        temp = regionList[minimumIndex]
-        regionList[minimumIndex] = regionList[i]
-        regionList[i] = temp
-    for i in range(0, len(regionList)):
-        for node in regionList[i]:
-            node.region = i
-            puzzleMatrix[node.row][node.column].region = i
 
 
 def getPuzzleList(regionList):
@@ -263,13 +215,12 @@ def getPuzzleList(regionList):
     return list
 
 
-def assignCellsMRV(regionList, puzzleMatrix):
+def assignCellsMRV(regionList):
     for region in regionList:
         for puzzleCell in region:
             cell = puzzleCell
             for i in range(1, len(regionList[cell.region]) + 1):
                 cell.minRemVals.append(i)
-                # puzzleMatrix[cell.row][cell.column].minRemVals.append(i)
 
 
 def forwardCheck(cell, regionList, puzzleMatrix):
@@ -345,10 +296,8 @@ def findMinMRV(puzzleMatrix):
 def intelligentSolver(regionList, puzzleMatrix):
     cell = findMinMRV(puzzleMatrix)
     # print(str(cell.id)+" "+str(puzzleMatrix[4][4].minRemVals))
-    #print(str(cell.id))
+    # print(str(cell.id))
     if cell.row == -1:
-        for line in puzzleMatrix:
-            print(line)
         return True
     else:
         if len(cell.minRemVals) == 0:
@@ -382,7 +331,7 @@ def intelligentSolver(regionList, puzzleMatrix):
 
 
 def main():
-    fileName = "puzzle1.txt"
+    fileName = input("Please enter the name of the puzzle file: ")
     file = open(fileName, "r")
     lineArray = []
     size = 0
@@ -394,31 +343,42 @@ def main():
         lineArray.append(line.strip("\n"))
         size += 1
 
+    print("Processing Puzzle File....")
     puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
-    # print(puzzleMatrix)
-    # print(regionList)
+    print("Puzzle file processed")
+    print(" ")
+    print(" Please enter the kind of solver you want to use")
+    solverType = input("Enter 'B' for Brute Force or 'I' for intelligent ")
+    if solverType == 'B':
+        row = 0
+        column = 0
+        start = time.process_time_ns()
+        solveNextCell(row, column, puzzleMatrix, regionList)
+        end = time.process_time_ns()
+        for line in puzzleMatrix:
+            print(line)
+        print("===========")
+        print("Time taken: " + str(end - start))
+        print("===========")
+    elif solverType == 'I':
+        # Intelligent solver with MRV and Forward checking
+        # First fill in MRV for all cells
+        assignCellsMRV(regionList)
+        #
+        # # Handle regions with fixed value
+        fixedValueMRVAdjust(regionList, puzzleMatrix)
+        solveOneValMRV(regionList, puzzleMatrix)
 
-    # We have the puzzle, now check if a particular number placement is legal
-    value = 1
-    row = 0
-    column = 0
-    maxValue = 324
-
-    # isPlacementLegal(value, row, column, puzzleMatrix, regionList)
-    # solveNextCell(row, column, puzzleMatrix, regionList, maxValue)
-    # for line in puzzleMatrix:
-    #     print(line)
-
-    # Intelligent solver with MRV and Forward checking
-    # First fill in MRV for all cells
-    assignCellsMRV(regionList, puzzleMatrix)
-    #
-    # # Handle regions with fixed value
-    fixedValueMRVAdjust(regionList, puzzleMatrix)
-    solveOneValMRV(regionList, puzzleMatrix)
-    for line in puzzleMatrix:
-        print(line)
-    intelligentSolver(regionList, puzzleMatrix)
+        start = time.process_time_ns()
+        intelligentSolver(regionList, puzzleMatrix)
+        end = time.process_time_ns()
+        for line in puzzleMatrix:
+            print(line)
+        print("===========")
+        print("Time taken: " + str(end - start))
+        print("===========")
+    else:
+        print("Wrong input")
 
 
 main()
