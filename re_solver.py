@@ -273,32 +273,45 @@ def assignCellsMRV(regionList, puzzleMatrix):
 
 
 def forwardCheck(cell, regionList, puzzleMatrix):
+    listOfCheckedNodes = []
+
     value = cell.value
     for othCells in regionList[cell.region]:
         if value in othCells.minRemVals and othCells.id != cell.id:
             othCells.minRemVals.remove(value)
+            listOfCheckedNodes.append(othCells)
 
     # clear columns
     for i in range(1, value + 1):
         index = cell.column - i
         if index >= 0:
-            if value in puzzleMatrix[cell.row][index].minRemVals:
-                puzzleMatrix[cell.row][index].minRemVals.remove(value)
+            changedCell = puzzleMatrix[cell.row][index]
+            if value in changedCell.minRemVals:
+                changedCell.minRemVals.remove(value)
+                listOfCheckedNodes.append(changedCell)
 
         index = cell.column + i
         if index < len(puzzleMatrix[0]):
-            if value in puzzleMatrix[cell.row][index].minRemVals:
-                puzzleMatrix[cell.row][index].minRemVals.remove(value)
+            changedCell = puzzleMatrix[cell.row][index]
+            if value in changedCell.minRemVals:
+                changedCell.minRemVals.remove(value)
+                listOfCheckedNodes.append(changedCell)
 
         index = cell.row - i
         if index >= 0:
-            if value in puzzleMatrix[index][cell.column].minRemVals:
-                puzzleMatrix[index][cell.column].minRemVals.remove(value)
+            changedCell = puzzleMatrix[index][cell.column]
+            if value in changedCell.minRemVals:
+                changedCell.minRemVals.remove(value)
+                listOfCheckedNodes.append(changedCell)
 
         index = cell.row + i
         if index < len(puzzleMatrix):
-            if value in puzzleMatrix[index][cell.column].minRemVals:
-                puzzleMatrix[index][cell.column].minRemVals.remove(value)
+            changedCell = puzzleMatrix[index][cell.column]
+            if value in changedCell.minRemVals:
+                changedCell.minRemVals.remove(value)
+                listOfCheckedNodes.append(changedCell)
+
+    return listOfCheckedNodes
 
 
 def fixedValueMRVAdjust(regionList, puzzleMatrix):
@@ -321,7 +334,7 @@ def findMinMRV(puzzleMatrix):
     minCell = PuzzleCell(0, -1, -1)
     for row in puzzleMatrix:
         for cell in row:
-            if (not cell.isFixedValue) and (not cell.isValueAssigned):
+            if not (cell.isFixedValue or cell.isValueAssigned):
                 if minCell.row == -1:
                     minCell = cell
                 elif len(minCell.minRemVals) > len(cell.minRemVals):
@@ -331,7 +344,8 @@ def findMinMRV(puzzleMatrix):
 
 def intelligentSolver(regionList, puzzleMatrix):
     cell = findMinMRV(puzzleMatrix)
-    print(str(cell.id))
+    # print(str(cell.id)+" "+str(puzzleMatrix[4][4].minRemVals))
+    #print(str(cell.id))
     if cell.row == -1:
         for line in puzzleMatrix:
             print(line)
@@ -340,26 +354,31 @@ def intelligentSolver(regionList, puzzleMatrix):
         if len(cell.minRemVals) == 0:
             return False
         else:
-            for cellValue in cell.minRemVals:
+            cellMinRemList = copy.deepcopy(cell.minRemVals)
+            for value in cellMinRemList:
 
-                newCell = copy.deepcopy(cell)
-                newCell.value = cellValue
-                newCell.isValueAssigned = True
-                newRegionList = copy.deepcopy(regionList)
-                newPuzzleMatrix = copy.deepcopy(puzzleMatrix)
-                cellRegion = newRegionList[newCell.region]
-
-                for val in range(0, len(cellRegion)):
-                    if cellRegion[val].row == cell.row and cellRegion[val].column == cell.column:
-                        newRegionList[newCell.region][val] = newPuzzleMatrix[newCell.row][newCell.column] = newCell
-                        break
-                forwardCheck(newCell, newRegionList, newPuzzleMatrix)
-
-                result = intelligentSolver(newRegionList, newPuzzleMatrix)
-                if result:
+                cell.value = value
+                cell.isValueAssigned = True
+                cell.minRemVals.remove(value)
+                listOfCheckedCells = forwardCheck(cell, regionList, puzzleMatrix)
+                truthVal = intelligentSolver(regionList, puzzleMatrix)
+                if truthVal:
                     return True
+                cell.isValueAssigned = False
+                cell.value = 0
+                cell.minRemVals.append(value)
+                for listCell in listOfCheckedCells:
+                    puzCell = puzzleMatrix[listCell.row][listCell.column]
+                    if value not in puzCell.minRemVals:
+                        puzCell.minRemVals.append(value)
 
-            return False
+                    for regCell in regionList[listCell.region]:
+                        if regCell.id == listCell.id:
+                            if value not in regCell.minRemVals:
+                                regCell.minRemVals.append(value)
+                                break
+
+    return False
 
 
 def main():
@@ -393,14 +412,13 @@ def main():
     # Intelligent solver with MRV and Forward checking
     # First fill in MRV for all cells
     assignCellsMRV(regionList, puzzleMatrix)
-
-    # Handle regions with fixed value
+    #
+    # # Handle regions with fixed value
     fixedValueMRVAdjust(regionList, puzzleMatrix)
     solveOneValMRV(regionList, puzzleMatrix)
     for line in puzzleMatrix:
         print(line)
     intelligentSolver(regionList, puzzleMatrix)
-    # print("Done")
 
 
 main()
