@@ -1,13 +1,34 @@
+__author__ = "Kunal Shitut(ks6807)"
+"""
+CSCI-630-02: Assignment 1
+Author=Kunal Shitut(ks6807), Ruta Kulkarni(rk6930)
+
+This is a program that implements two solvers 
+for a Ripple Effect puzzle. The first is a brute
+force solve and the second is a intelligent solver
+
+"""
+
 import copy
 import time
 
+# Counter variable to keep track of recursive calls
 counter = 0
 
 
 class PuzzleCell:
+    """
+    The class represents a puzzle cell of the ripple effect puzzle
+    """
     __slots__ = "row", "column", "value", "id", "region", "isFixedValue", "isValueAssigned", "minRemVals"
 
     def __init__(self, value, row, column):
+        """
+        The constructor for creating a cell object
+        :param value: The value of the puzzle cell
+        :param row: The row in which the cell is located
+        :param column: The column in which the cell is located
+        """
         self.value = value
         self.row = row
         self.column = column
@@ -17,13 +38,28 @@ class PuzzleCell:
         self.minRemVals = []
 
     def __str__(self):
+        """
+        Returns a string representation of the Puzzle cell
+        :return: String representing value of the cell
+        """
         return str(self.value)
 
     def __repr__(self):
+        """
+        Returns a representation of the puzzle cell
+        :return: The string representing the puzzle cell
+        """
         return str(self.value)
 
 
 def inAddedCells(addedCellsDict, rowCounter, columnCounter):
+    """
+    Check if a given cell is already present in the row and column
+    :param addedCellsDict: The dictionary of all added cells
+    :param rowCounter: The row of the cell to check
+    :param columnCounter: The column of the cell to check
+    :return: True if cell is present
+    """
     if str(rowCounter) + "," + str(columnCounter) in addedCellsDict.keys():
         return True
     else:
@@ -31,6 +67,16 @@ def inAddedCells(addedCellsDict, rowCounter, columnCounter):
 
 
 def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex, nodeList):
+    """
+    Get all cells in a given cell's region
+    :param rowCounter: The row of the cell
+    :param columnCounter: The column of the cell
+    :param lineArray: The puzzle input file representation
+    :param lineIndex: The index of the line in the puzzle file
+    :param charIndex: The index of a character in the line
+    :param nodeList: The list of all nodes in the region
+    :return: The updated list of all cells in the region
+    """
     # For checking the bottom cell
     lineIndexCounter = lineIndex + 1
     while len(lineArray[lineIndexCounter]) < (charIndex + 1) or lineArray[lineIndexCounter][charIndex] == " ":
@@ -99,6 +145,13 @@ def getAllRegionCells(rowCounter, columnCounter, lineArray, lineIndex, charIndex
 
 
 def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
+    """
+    Process the puzzle file array into the representation of the puzzle
+    :param puzzleHeight: The height of the puzzle
+    :param puzzleWidth: The width of the puzzle
+    :param lineArray: The puzzle file
+    :return: The puzzle matrix and the region list of the puzzle
+    """
     rowCounter = 0
     listOfRegions = []
     addedCellsDict = {}
@@ -140,6 +193,15 @@ def processPuzzleArray(puzzleHeight, puzzleWidth, lineArray):
 
 
 def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
+    """
+    Determines if the given value can be placed at that cell or not.
+    :param value: The value to check
+    :param row: The row to check
+    :param column: The column to check
+    :param puzzleMatrix: The matrix of the puzzle
+    :param regionList: The list of the puzzle region
+    :return: True if value placement is legal
+    """
     cell = puzzleMatrix[row][column]
     if value > len(regionList[cell.region]):
         return False
@@ -169,6 +231,14 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
 
 
 def solveNextCell(row, column, puzzleMatrix, regionList):
+    """
+    Solve the puzzle using Bruteforce appraoch
+    :param row: The row of the cell to start from
+    :param column: The column of the cell to start from
+    :param puzzleMatrix: The puzzle matrix
+    :param regionList: The region list of the puzzle
+    :return: True if the puzzle has been solved
+    """
     global counter
     counter += 1
 
@@ -212,6 +282,11 @@ def solveNextCell(row, column, puzzleMatrix, regionList):
 
 
 def getPuzzleList(regionList):
+    """
+    Get a list of all cells
+    :param regionList: The region list to copy from
+    :return: The list of cells
+    """
     list = []
     for region in regionList:
         for cell in region:
@@ -221,6 +296,11 @@ def getPuzzleList(regionList):
 
 
 def assignCellsMRV(regionList):
+    """
+    Assign the MRV to all cells in the regionList
+    :param regionList: The region list
+    :return: None
+    """
     for region in regionList:
         for puzzleCell in region:
             cell = puzzleCell
@@ -229,6 +309,13 @@ def assignCellsMRV(regionList):
 
 
 def forwardCheck(cell, regionList, puzzleMatrix):
+    """
+    Forward check and eliminate invalid MRVs
+    :param cell: The cell to forward check
+    :param regionList: The list of regions
+    :param puzzleMatrix: The puzzle matrix
+    :return: list of all cells that were forward checked
+    """
     listOfCheckedNodes = []
 
     value = cell.value
@@ -271,6 +358,12 @@ def forwardCheck(cell, regionList, puzzleMatrix):
 
 
 def fixedValueMRVAdjust(regionList, puzzleMatrix):
+    """
+    Adjust MRV for fixed value cells
+    :param regionList: The region list
+    :param puzzleMatrix: The puzzle matrix
+    :return:
+    """
     for region in regionList:
         for cell in region:
             if cell.isFixedValue:
@@ -279,6 +372,12 @@ def fixedValueMRVAdjust(regionList, puzzleMatrix):
 
 
 def solveOneValMRV(regionList, puzzleMatrix):
+    """
+    Solve all cells with only 1 possible value
+    :param regionList: The region list
+    :param puzzleMatrix: The puzzle matrix
+    :return: None
+    """
     global counter
 
     for region in regionList:
@@ -291,6 +390,11 @@ def solveOneValMRV(regionList, puzzleMatrix):
 
 
 def findMinMRV(puzzleMatrix):
+    """
+    Find the cell with least number of remaining values
+    :param puzzleMatrix: The puzzle matrix
+    :return: The minimum cell
+    """
     minCell = PuzzleCell(0, -1, -1)
     for row in puzzleMatrix:
         for cell in row:
@@ -303,6 +407,12 @@ def findMinMRV(puzzleMatrix):
 
 
 def intelligentSolver(regionList, puzzleMatrix):
+    """
+    The implementation of the intelligent solver using MRV and Forward checking
+    :param regionList: The region list
+    :param puzzleMatrix: The puzzleMatrix
+    :return: True if puzzle solved
+    """
     global counter
     counter += 1
 
@@ -343,10 +453,14 @@ def intelligentSolver(regionList, puzzleMatrix):
 
 
 def main():
-    # Set the global counter
+    """
+    The main method
+    :return: None
+    """
+    global counter
     nextIter = True
     while nextIter:
-        global counter
+        # Set the global counter
         counter = 0
 
         fileName = input("Please enter the name of the puzzle file: ")
@@ -371,16 +485,19 @@ def main():
             row = 0
             column = 0
             start = time.time()
-            solveNextCell(row, column, puzzleMatrix, regionList)
-            end = time.time()
-            for line in puzzleMatrix:
-                print(line)
-            print("===========")
-            print("Time taken: " + str((end - start) * 1000) + " milliseconds")
-            print("===========")
-            print("===========")
-            print("Count of recursive calls: " + str(counter))
-            print("===========")
+            value = solveNextCell(row, column, puzzleMatrix, regionList)
+            if value:
+                end = time.time()
+                for line in puzzleMatrix:
+                    print(line)
+                print("===========")
+                print("Time taken: " + str((end - start) * 1000) + " milliseconds")
+                print("===========")
+                print("===========")
+                print("Count of recursive calls: " + str(counter))
+                print("===========")
+            else:
+                print("Puzzle cannot be solved")
         elif solverType == 'I':
             # Intelligent solver with MRV and Forward checking
             # First fill in MRV for all cells
@@ -390,16 +507,19 @@ def main():
             fixedValueMRVAdjust(regionList, puzzleMatrix)
             start = time.time()
             solveOneValMRV(regionList, puzzleMatrix)
-            intelligentSolver(regionList, puzzleMatrix)
-            end = time.time()
-            for line in puzzleMatrix:
-                print(line)
-            print("===========")
-            print("Time taken: " + str((end - start) * 1000) + "  milliseconds")
-            print("===========")
-            print("===========")
-            print("Count of recursive calls: " + str(counter))
-            print("===========")
+            value = intelligentSolver(regionList, puzzleMatrix)
+            if value:
+                end = time.time()
+                for line in puzzleMatrix:
+                    print(line)
+                print("===========")
+                print("Time taken: " + str((end - start) * 1000) + "  milliseconds")
+                print("===========")
+                print("===========")
+                print("Count of recursive calls: " + str(counter))
+                print("===========")
+            else:
+                print("Puzzle cannot be solved")
         else:
             print("Wrong input")
         again = input("Would you like to try again ?(y/n) ")
