@@ -1,6 +1,8 @@
 import copy
 import time
 
+counter = 0
+
 
 class PuzzleCell:
     __slots__ = "row", "column", "value", "id", "region", "isFixedValue", "isValueAssigned", "minRemVals"
@@ -167,6 +169,9 @@ def isPlacementLegal(value, row, column, puzzleMatrix, regionList):
 
 
 def solveNextCell(row, column, puzzleMatrix, regionList):
+    global counter
+    counter += 1
+
     node = puzzleMatrix[row][column]
     if node.isFixedValue:
         value = False
@@ -266,6 +271,7 @@ def forwardCheck(cell, regionList, puzzleMatrix):
 
 
 def fixedValueMRVAdjust(regionList, puzzleMatrix):
+
     for region in regionList:
         for cell in region:
             if cell.isFixedValue:
@@ -274,8 +280,12 @@ def fixedValueMRVAdjust(regionList, puzzleMatrix):
 
 
 def solveOneValMRV(regionList, puzzleMatrix):
+    global counter
+
     for region in regionList:
+
         if len(region) == 1:
+            counter += 1
             region[0].value = 1
             region[0].isValueAssigned = True
             forwardCheck(region[0], regionList, puzzleMatrix)
@@ -294,6 +304,9 @@ def findMinMRV(puzzleMatrix):
 
 
 def intelligentSolver(regionList, puzzleMatrix):
+    global counter
+    counter += 1
+
     cell = findMinMRV(puzzleMatrix)
     # print(str(cell.id)+" "+str(puzzleMatrix[4][4].minRemVals))
     # print(str(cell.id))
@@ -331,6 +344,10 @@ def intelligentSolver(regionList, puzzleMatrix):
 
 
 def main():
+    # Set the global counter
+    global counter
+    counter = 0
+
     fileName = input("Please enter the name of the puzzle file: ")
     file = open(fileName, "r")
     lineArray = []
@@ -358,7 +375,10 @@ def main():
         for line in puzzleMatrix:
             print(line)
         print("===========")
-        print("Time taken: " + str(end - start))
+        print("Time taken: " + str(end - start)+" nanoseconds")
+        print("===========")
+        print("===========")
+        print("Count of recursive calls: " + str(counter))
         print("===========")
     elif solverType == 'I':
         # Intelligent solver with MRV and Forward checking
@@ -375,7 +395,10 @@ def main():
         for line in puzzleMatrix:
             print(line)
         print("===========")
-        print("Time taken: " + str(end - start))
+        print("Time taken: " + str(end - start)+ "  nanoseconds")
+        print("===========")
+        print("===========")
+        print("Count of recursive calls: "+str(counter))
         print("===========")
     else:
         print("Wrong input")
