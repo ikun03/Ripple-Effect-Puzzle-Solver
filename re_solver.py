@@ -271,7 +271,6 @@ def forwardCheck(cell, regionList, puzzleMatrix):
 
 
 def fixedValueMRVAdjust(regionList, puzzleMatrix):
-
     for region in regionList:
         for cell in region:
             if cell.isFixedValue:
@@ -345,63 +344,67 @@ def intelligentSolver(regionList, puzzleMatrix):
 
 def main():
     # Set the global counter
-    global counter
-    counter = 0
+    nextIter = True
+    while nextIter:
+        global counter
+        counter = 0
 
-    fileName = input("Please enter the name of the puzzle file: ")
-    file = open(fileName, "r")
-    lineArray = []
-    size = 0
-    inputLine = file.readline().strip("\n").split(" ")
+        fileName = input("Please enter the name of the puzzle file: ")
+        file = open(fileName, "r")
+        lineArray = []
+        size = 0
+        inputLine = file.readline().strip("\n").split(" ")
 
-    puzzleHeight = int(inputLine[0])
-    puzzleWidth = int(inputLine[1])
-    for line in file:
-        lineArray.append(line.strip("\n"))
-        size += 1
+        puzzleHeight = int(inputLine[0])
+        puzzleWidth = int(inputLine[1])
+        for line in file:
+            lineArray.append(line.strip("\n"))
+            size += 1
 
-    print("Processing Puzzle File....")
-    puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
-    print("Puzzle file processed")
-    print(" ")
-    print(" Please enter the kind of solver you want to use")
-    solverType = input("Enter 'B' for Brute Force or 'I' for intelligent ")
-    if solverType == 'B':
-        row = 0
-        column = 0
-        start = time.process_time_ns()
-        solveNextCell(row, column, puzzleMatrix, regionList)
-        end = time.process_time_ns()
-        for line in puzzleMatrix:
-            print(line)
-        print("===========")
-        print("Time taken: " + str(end - start)+" nanoseconds")
-        print("===========")
-        print("===========")
-        print("Count of recursive calls: " + str(counter))
-        print("===========")
-    elif solverType == 'I':
-        # Intelligent solver with MRV and Forward checking
-        # First fill in MRV for all cells
-        assignCellsMRV(regionList)
-        #
-        # # Handle regions with fixed value
-        fixedValueMRVAdjust(regionList, puzzleMatrix)
-        solveOneValMRV(regionList, puzzleMatrix)
-
-        start = time.process_time_ns()
-        intelligentSolver(regionList, puzzleMatrix)
-        end = time.process_time_ns()
-        for line in puzzleMatrix:
-            print(line)
-        print("===========")
-        print("Time taken: " + str(end - start)+ "  nanoseconds")
-        print("===========")
-        print("===========")
-        print("Count of recursive calls: "+str(counter))
-        print("===========")
-    else:
-        print("Wrong input")
+        print("Processing Puzzle File....")
+        puzzleMatrix, regionList = processPuzzleArray(puzzleHeight, puzzleWidth, lineArray)
+        print("Puzzle file processed")
+        print(" ")
+        print(" Please enter the kind of solver you want to use")
+        solverType = input("Enter 'B' for Brute Force or 'I' for intelligent ")
+        if solverType == 'B':
+            row = 0
+            column = 0
+            start = time.time()
+            solveNextCell(row, column, puzzleMatrix, regionList)
+            end = time.time()
+            for line in puzzleMatrix:
+                print(line)
+            print("===========")
+            print("Time taken: " + str((end - start) * 1000) + " milliseconds")
+            print("===========")
+            print("===========")
+            print("Count of recursive calls: " + str(counter))
+            print("===========")
+        elif solverType == 'I':
+            # Intelligent solver with MRV and Forward checking
+            # First fill in MRV for all cells
+            assignCellsMRV(regionList)
+            #
+            # # Handle regions with fixed value
+            fixedValueMRVAdjust(regionList, puzzleMatrix)
+            start = time.time()
+            solveOneValMRV(regionList, puzzleMatrix)
+            intelligentSolver(regionList, puzzleMatrix)
+            end = time.time()
+            for line in puzzleMatrix:
+                print(line)
+            print("===========")
+            print("Time taken: " + str((end - start) * 1000) + "  milliseconds")
+            print("===========")
+            print("===========")
+            print("Count of recursive calls: " + str(counter))
+            print("===========")
+        else:
+            print("Wrong input")
+        again = input("Would you like to try again ?(y/n) ")
+        if not again == "y":
+            nextIter = False
 
 
 main()
